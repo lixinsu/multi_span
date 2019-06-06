@@ -66,6 +66,7 @@ def main():
 
     ## Required parameters
     parser.add_argument('--task', default='squad', type=str, help='Task affecting load data and vectorize feature')
+    parser.add_argument('--loss_type', default='double', type=str, help='Select loss double or single, only for multi task')
     parser.add_argument("--bert_model", default=None, type=str,
                         help="Bert pre-trained model selected in the list: bert-base-uncased, "
                         "bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, "
@@ -328,7 +329,7 @@ def main():
                 if n_gpu == 1:
                     batch = tuple(t.to(device) for t in batch) # multi-gpu does scattering it-self
                 input_ids, input_mask, segment_ids, start_positions, end_positions, start_vector, end_vector, content_vector = batch
-                loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions, start_vector, end_vector, content_vector)
+                loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions, start_vector, end_vector, content_vector, args.loss_type)
                 if n_gpu > 1:
                     loss = loss.mean() # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
@@ -427,7 +428,7 @@ def main():
         output_prediction_file = os.path.join(args.output_dir, "predictions.json")
         output_nbest_file = os.path.join(args.output_dir, "nbest_predictions.json")
         output_null_log_odds_file = os.path.join(args.output_dir, "null_odds.json")
-        if args.task == 'multi':
+        if args.task == 'multi' and args.loss_type=='double':
             write_predictions_couple_labeling(eval_examples, eval_features, all_results,
                           args.n_best_size, args.max_answer_length,
                           args.do_lower_case, output_prediction_file,

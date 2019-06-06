@@ -31,13 +31,14 @@ from io import open
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from torch.nn import functional as F
 
 from .file_utils import cached_path, WEIGHTS_NAME, CONFIG_NAME
 
 logger = logging.getLogger(__name__)
 
 PRETRAINED_MODEL_ARCHIVE_MAP = {
-    'bert-base-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased.tar.gz",
+    'bert-base-uncased': "/data/sulixin/bert_data/bert-base-uncased.tar.gz",
     'bert-large-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-uncased.tar.gz",
     'bert-base-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-cased.tar.gz",
     'bert-large-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-cased.tar.gz",
@@ -1198,14 +1199,28 @@ class BertForQuestionAnswering(BertPreTrainedModel):
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
         self.apply(self.init_bert_weights)
 
-    def forward(self, input_ids, token_type_ids=None, attention_mask=None, start_positions=None, end_positions=None):
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, start_positions=None, end_positions=None, start_vector=None, end_vector=None, content_vector=None):
         sequence_output, _ = self.bert(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
         logits = self.qa_outputs(sequence_output)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
+        if start_vector is not None and end_vector is not None and loss_type=='double':
+            passage_mask = token_type_ids.float()
+            start_loss = F.binary_cross_entropy_with_logits(start_logits, start_vector, reduction='none')
+            end_loss = F.binary_cross_entropy_with_logits(end_logits, end_vector, reduction='none')
+            start_loss = (start_loss * passage_mask).sum(dim=1) / passage_mask.sum(dim=1)
+            end_loss = (end_loss * passage_mask).sum(dim=1) / passage_mask.sum(dim=1)
+            loss = start_loss.mean() + end_loss.mean()
+            return loss
 
-        if start_positions is not None and end_positions is not None:
+        elif content_vector is not None and loss_type=='single':
+            loss =  F.binary_cross_entropy_with_logits(start_logits, content_vector, reduction='none')
+            passage_mask = token_type_ids.float()
+            loss = (loss * passage_mask).sum(dim=1) / passage_mask.sum(dim=1)
+            return loss.mean()
+
+        elif start_positions is not None and end_positions is not None:
             # If we are on multi-GPU, split add a dimension
             if len(start_positions.size()) > 1:
                 start_positions = start_positions.squeeze(-1)
