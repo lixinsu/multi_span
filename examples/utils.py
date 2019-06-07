@@ -80,9 +80,11 @@ def write_predictions_couple_labeling(all_examples, all_features, all_results, n
             start_indexes = []
             end_indexes = []
             thresh = 0
-            for idx, (p, start, end) in enumerate(zip(feature.segment_ids, result.start_logits, result.end_logits)):
+            for idx, (p, start, end) in enumerate(zip(feature.segment_ids[:-1], result.start_logits, result.end_logits)):
                 if p == 0:
                     continue
+                if p == 1 and feature.segment_ids[idx + 1] ==  0:
+                    break
                 if start > thresh:
                     start_indexes.append(idx)
                 if end > thresh:
