@@ -1205,7 +1205,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
-        if start_vector is not None and end_vector is not None:
+        if start_vector is not None and end_vector is not None and loss_type=='double':
             passage_mask = token_type_ids.float()
             start_loss = F.binary_cross_entropy_with_logits(start_logits, start_vector, reduction='none')
             end_loss = F.binary_cross_entropy_with_logits(end_logits, end_vector, reduction='none')
@@ -1214,7 +1214,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
             loss = start_loss.mean() + end_loss.mean()
             return loss
 
-        elif content_vector is not None:
+        elif content_vector is not None and loss_type=='single':
             loss =  F.binary_cross_entropy_with_logits(start_logits, content_vector, reduction='none')
             passage_mask = token_type_ids.float()
             loss = (loss * passage_mask).sum(dim=1) / passage_mask.sum(dim=1)
