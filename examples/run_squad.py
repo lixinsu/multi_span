@@ -373,7 +373,8 @@ def main():
         model = BertForQuestionAnswering.from_pretrained(args.output_dir)
         tokenizer = BertTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
     else:
-        model = BertForQuestionAnswering.from_pretrained(args.bert_model)
+        model = BertForQuestionAnswering.from_pretrained(args.output_dir)
+        tokenizer = BertTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
 
     model.to(device)
 
