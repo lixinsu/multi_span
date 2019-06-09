@@ -276,9 +276,9 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                 doc_end = doc_span.start + doc_span.length - 1
                 doc_offset = len(query_tokens) + 2
                 for s in tok_start_position:
-                    if s < 0 or s > doc_end:
+                    if s < doc_start or s > doc_end:
                         continue
-                    start_vector[doc_offset + s - doc_span.start] = 1
+                    start_vector[doc_offset + s - doc_start] = 1
                 for e in  tok_end_position:
                     if e > doc_end:
                         continue
@@ -290,8 +290,9 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                     for i in range(s, e+1):
                         content_vector[doc_offset + i - doc_span.start] = 1
                 for s, e in zip(tok_start_position, tok_end_position):
-                    start_position = s - doc_span.start + doc_offset
-                    end_position = e - doc_span.start + doc_offset
+                    start_position = s - doc_start + doc_offset
+                    end_position = e - doc_start + doc_offset
+                    break
 
             if is_training and not example.is_impossible and not  isinstance( tok_start_position, list):
                 # For training, if our document chunk does not contain an annotation

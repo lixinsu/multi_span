@@ -1220,7 +1220,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
             loss = (loss * passage_mask).sum(dim=1) / passage_mask.sum(dim=1)
             return loss.mean()
 
-        elif start_positions is not None and end_positions is not None:
+        elif loss_type=='origin' or (start_positions is not None and end_positions is not None):
             # If we are on multi-GPU, split add a dimension
             if len(start_positions.size()) > 1:
                 start_positions = start_positions.squeeze(-1)
