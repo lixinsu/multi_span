@@ -441,7 +441,7 @@ def main():
                           args.do_lower_case, output_prediction_file,
                           output_nbest_file, output_null_log_odds_file, args.verbose_logging,
                           args.version_2_with_negative, args.null_score_diff_threshold)
-        elif args.task == 'squad':
+        elif args.task == 'squad' or (args.task=='multi' and args.loss_type=='origin'):
             write_predictions(eval_examples, eval_features, all_results,
                           args.n_best_size, args.max_answer_length,
                           args.do_lower_case, output_prediction_file,
