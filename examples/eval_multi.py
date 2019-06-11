@@ -32,6 +32,8 @@ def exact_match(qid2answers, qid2preditions):
             print('{} is not answered'.format(qid))
             continue
         predictions = qid2predictions[qid]
+        if isinstance( predictions, str ):
+            predictions = [predictions ]
         if len(answers) != len(predictions):
             qid2em[qid]['em'] = 0.0
             continue
@@ -64,6 +66,8 @@ def f_measure(qid2answer, qid2prediction):
         predictions = qid2predictions[qid]
         if isinstance(predictions[0], dict):
             predictions = [pred['text'] for pred in predictions]
+        if isinstance( predictions, str ):
+            predictions = [predictions ]
         qid2f1[qid]['f1'] = _f1(predictions, answers)
     return 100*statistics.mean([x['f1'] for x in qid2f1.values()]), qid2f1
 
